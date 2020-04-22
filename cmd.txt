@@ -1,3 +1,5 @@
 /bin/ls -r
 /bin/ls -l
 /bin/ls -h
+/bin/ls -h
+

@@ -1,3 +1,4 @@
-Daemon created file 2_output.txt
-Daemon created file 3_output.txt
-Daemon created file 1_output.txt
+Daemon implements command 1
+Daemon implements command 2
+Daemon implements command 3
+Daemon implements command 4
