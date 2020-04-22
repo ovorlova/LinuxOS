@@ -1,0 +1,25 @@
+README.md
+output.txt
+log.txt
+Daemon.c
+Daemon
+cmd.txt
+cmd.txt
+Daemon
+Daemon.c
+log.txt
+output.txt
+README.md
+cmd.txt
+Daemon
+Daemon.c
+log.txt
+output.txt
+README.md
+итого 36
+-rw-r--r-- 1 olga olga    45 апр 22 08:50 cmd.txt
+-rwxr-xr-x 1 olga olga 13520 апр 22 08:49 Daemon
+-rw-r--r-- 1 olga olga  3514 апр 22 08:49 Daemon.c
+-rwx------ 1 olga olga   112 апр 22 08:51 log.txt
+-rwx------ 1 olga olga   159 апр 22 08:51 output.txt
+-rw-r--r-- 1 olga olga   413 апр 15 21:13 README.md

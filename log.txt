@@ -1,0 +1,4 @@
+Daemon implements command 1
+Daemon implements command 2
+Daemon implements command 3
+Daemon implements command 4
