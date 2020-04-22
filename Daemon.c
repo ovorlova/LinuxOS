@@ -19,6 +19,8 @@
 
 int flag = 0;
 int flagToDie = 0;
+sem_t semaphore;
+
 void sigalrm_handler(int signum){ // обработаем сигнал SIGALRM - его и будем ловить во время работы
 	flag = 1;
 	return;
@@ -34,70 +36,69 @@ int Daemon(char* filename) {
 	signal(SIGTERM, sigterm_handler);
 	openlog("NewSemaphore", LOG_PID, LOG_DAEMON); // будем писать в syslog сообщения, помеченные "NewDaemon", и выводить PID
 	
-	sem_t semaphore;
-	sem_init(&semaphore, 0, 1);
-	
-
 	while(1){
 		pause();
-		if (flag == 1){ 
+		if (flag == 1){ // поймали сигнал
 			syslog(LOG_NOTICE, "Alarm signal catched"); 
 			
-			char buf[1000] = "";
-            int fd = open(filename, O_CREAT|O_RDWR, S_IRWXU);
-            read(fd, buf, sizeof(buf));
-            close(fd);
-            flag = 0;
-            
-			char* commands[1000];
-			int cnt_commands = 0;
+			char * buf = NULL;
+			size_t buf_size = 0;
 			
-			char* pch = strtok(buf, "\n");			
-			while(pch != NULL) {
-				commands[cnt_commands] = pch;
-				commands[cnt_commands++][strlen(pch)] = '\0';
-				pch = strtok(NULL, "\n");
-			} 
-
-			commands[cnt_commands] = NULL;
-
+			FILE *fp = fopen("cmd.txt", "r");
+			char ** commands[1000];
+			int cnt_commands = 0;
+			while(getline(&buf, &buf_size, fp)>=0){
+				char** command = (char**)malloc(256);
+				char* pch = strtok (buf, " "); // вместо split
+ 
+				int cnt_str = 0;
+				while (pch != NULL) 
+				{
+					if (pch[0] == '\n')
+						continue;
+					command[cnt_str] = pch;
+					if (command[cnt_str][strlen(pch)-1] == '\n') // если в команду попал символ '\n'
+						command[cnt_str][strlen(pch)-1] = '\0';
+					cnt_str++;
+					pch = strtok(NULL, " ");
+				}
+				command[cnt_str] = NULL;
+				commands[cnt_commands++] = command;
+				buf_size = 0;
+			}
+			flag = 0;
+			fclose(fp);
+			
+			sem_init(&semaphore, 0, 1);
+			
+			
 			for (int i = 0; i < cnt_commands; i++){ // обработка комманд
 				pid_t parpid;
 				if((parpid=fork()) == 0){ // дочерний процесс исполнит команду и завершится
+				
+					sem_wait(&semaphore); 
 					
-					int cnt_str = 0;
-					char* pch = strtok (commands[i], " ");
-					char* command[100];
-					while (pch != NULL) 
-					{
-						command[cnt_str++] = pch;
-						pch = strtok(NULL, " ");
-					}
-					command[cnt_str] = NULL;
-					int wait = sem_wait(&semaphore);
-					if (wait == -1){ 
+					char file[20];
+					sprintf(file, "%d%s",  i+1, "_output.txt");
+					char log_message[100];
+					sprintf(log_message, "%s%s%s", "Daemon created file ", file, "\n");
+					
+					int logFile = open("log.txt", O_CREAT|O_RDWR, S_IRWXU);
+					lseek(logFile, 0, SEEK_END);
+					int retWrite = write(logFile, log_message, strlen(log_message));
+					if (retWrite == -1){ 
 						char error[100];
-						sprintf(error, "%s%d%s", "Can't implement ", i+1, " command\n");
+						sprintf(error, "%s%d%s", "Can't write ", i+1, " command\n");
 						syslog(LOG_ERR, error);
 					}
-					else{
+					close(logFile);
 					
-						char log_message[100];
-						sprintf(log_message, "%s%d%s", "Daemon implements command ", i+1, "\n");
-						
-						int logFile = open("log.txt", O_CREAT|O_RDWR, S_IRWXU);
-						lseek(logFile, 0, SEEK_END);
-						write(logFile, log_message, strlen(log_message));
-						close(logFile);
-						
-						close(1);
-						int fileOut = open("output.txt", O_CREAT|O_RDWR|O_APPEND, S_IRWXU); 
-						dup2(fileOut, 1); 
-						
-						sem_post(&semaphore);
-						execv(command[0], command);
-					}
+					close(1);
+					int fileOut = open(file, O_CREAT|O_RDWR, S_IRWXU);
+					dup2(fileOut, 1); 
 					
+					sem_post(&semaphore);
+					execv(commands[i][0], commands[i]);
 				}
 			}
 		}
