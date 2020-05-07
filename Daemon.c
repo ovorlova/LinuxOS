@@ -93,11 +93,15 @@ int Daemon(char* filename) {
 						close(1);
 						int fileOut = open("output.txt", O_CREAT|O_RDWR|O_APPEND, S_IRWXU); 
 						dup2(fileOut, 1); 
-						
-						sem_post(&semaphore);
+					
 						execv(command[0], command);
 					}
 					
+				}
+				else {
+					int status;
+					wait(&status); 
+					sem_post(&semaphore);
 				}
 			}
 		}
