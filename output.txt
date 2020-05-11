@@ -3,21 +3,25 @@ output.txt
 log.txt
 Daemon.c
 Daemon
+daemon
 cmd.txt
-итого 36
+итого 52
 -rw-r--r-- 1 olga olga    45 апр 22 08:50 cmd.txt
+-rwxr-xr-x 1 olga olga 13656 мая 11 12:45 daemon
 -rwxr-xr-x 1 olga olga 13544 мая  7 20:37 Daemon
--rw-r--r-- 1 olga olga  3567 мая  7 20:33 Daemon.c
--rwx------ 1 olga olga    56 мая  7 20:37 log.txt
--rwx------ 1 olga olga    53 мая  7 20:37 output.txt
+-rw-r--r-- 1 olga olga  3788 мая 11 12:41 Daemon.c
+-rwx------ 1 olga olga    56 мая 11 12:45 log.txt
+-rwx------ 1 olga olga    60 мая 11 12:45 output.txt
 -rw-r--r-- 1 olga olga   413 апр 15 21:13 README.md
 cmd.txt
+daemon
 Daemon
 Daemon.c
 log.txt
 output.txt
 README.md
 cmd.txt
+daemon
 Daemon
 Daemon.c
 log.txt

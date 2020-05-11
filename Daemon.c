@@ -19,6 +19,9 @@
 
 int flag = 0;
 int flagToDie = 0;
+int flagWait = 0;
+sem_t semaphore;
+
 void sigalrm_handler(int signum){ // обработаем сигнал SIGALRM - его и будем ловить во время работы
 	flag = 1;
 	return;
@@ -29,12 +32,18 @@ void sigterm_handler(int signum){ // обработаем сигнал SIGTERM �
 	return;
 }
 
+void sigchild_handler(int signum){
+	flagWait = 1;
+	return;
+}
+
 int Daemon(char* filename) {
 	signal(SIGALRM, sigalrm_handler); 
 	signal(SIGTERM, sigterm_handler);
-	openlog("NewSemaphore", LOG_PID, LOG_DAEMON); // будем писать в syslog сообщения, помеченные "NewDaemon", и выводить PID
+	signal(SIGCHLD, sigchild_handler);
+	openlog("NewSemaphore", LOG_PID, LOG_DAEMON); // будем писать в syslog сообщения, помеченные "NewSemaphore", и выводить PID
 	
-	sem_t semaphore;
+
 	sem_init(&semaphore, 0, 1);
 	
 
@@ -60,7 +69,6 @@ int Daemon(char* filename) {
 			} 
 
 			commands[cnt_commands] = NULL;
-
 			for (int i = 0; i < cnt_commands; i++){ // обработка комманд
 				pid_t parpid;
 				if((parpid=fork()) == 0){ // дочерний процесс исполнит команду и завершится
@@ -93,16 +101,23 @@ int Daemon(char* filename) {
 						close(1);
 						int fileOut = open("output.txt", O_CREAT|O_RDWR|O_APPEND, S_IRWXU); 
 						dup2(fileOut, 1); 
-					
 						execv(command[0], command);
 					}
+				
 					
 				}
-				else {
-					int status;
-					wait(&status); 
-					sem_post(&semaphore);
+				else { //parent
+					while(1){
+						pause();
+						if (flagWait == 1){
+							wait(NULL);
+							sem_post(&semaphore);
+							flagWait = 0;
+							break;
+						}
+					}
 				}
+				
 			}
 		}
 		if (flagToDie == 1){ // сигнал завершения процесса
